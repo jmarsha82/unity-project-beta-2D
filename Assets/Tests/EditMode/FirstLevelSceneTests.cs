@@ -69,6 +69,27 @@ namespace FirstLevel.EditorTests
             Assert.That(camera.backgroundColor, Is.EqualTo(Color.white));
         }
 
+        [Test]
+        public void BordersAlignInsideMainCameraViewWithEqualThickness()
+        {
+            OpenFirstLevel();
+
+            var camera = GameObject.Find("Main Camera").GetComponent<Camera>();
+            const float expectedThickness = 0.25f;
+            var halfHeight = camera.orthographicSize;
+            var halfWidth = halfHeight * (16f / 9f);
+            var left = camera.transform.position.x - halfWidth;
+            var right = camera.transform.position.x + halfWidth;
+            var bottom = camera.transform.position.y - halfHeight;
+            var top = camera.transform.position.y + halfHeight;
+            var center = new Vector2(camera.transform.position.x, camera.transform.position.y);
+
+            AssertBorder("Top Border", new Vector3(center.x, top - expectedThickness / 2f, -0.3f), new Vector3(halfWidth * 2f, expectedThickness, 1f), expectedThickness);
+            AssertBorder("Bottom Border", new Vector3(center.x, bottom + expectedThickness / 2f, -0.3f), new Vector3(halfWidth * 2f, expectedThickness, 1f), expectedThickness);
+            AssertBorder("Left Border", new Vector3(left + expectedThickness / 2f, center.y, -0.3f), new Vector3(expectedThickness, halfHeight * 2f, 1f), expectedThickness);
+            AssertBorder("Right Border", new Vector3(right - expectedThickness / 2f, center.y, -0.3f), new Vector3(expectedThickness, halfHeight * 2f, 1f), expectedThickness);
+        }
+
         private static void OpenFirstLevel()
         {
             EditorSceneManager.OpenScene(ScenePath);
@@ -81,6 +102,15 @@ namespace FirstLevel.EditorTests
             Assert.That(gameObject, Is.Not.Null, objectName);
             AssertVector3(gameObject.transform.position, expectedPosition, $"{objectName} position");
             AssertVector3(gameObject.transform.localScale, expectedScale, $"{objectName} scale");
+        }
+
+        private static void AssertBorder(string objectName, Vector3 expectedPosition, Vector3 expectedScale, float expectedThickness)
+        {
+            AssertTransform(objectName, expectedPosition, expectedScale);
+
+            var border = GameObject.Find(objectName);
+            Assert.That(border.GetComponent<BoxCollider2D>(), Is.Not.Null, $"{objectName} collider");
+            Assert.That(Mathf.Min(border.transform.localScale.x, border.transform.localScale.y), Is.EqualTo(expectedThickness).Within(0.0001f), $"{objectName} thickness");
         }
 
         private static void AssertVector3(Vector3 actual, Vector3 expected, string message)
