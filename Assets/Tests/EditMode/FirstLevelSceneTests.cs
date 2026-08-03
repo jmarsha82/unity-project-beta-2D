@@ -7,7 +7,7 @@ namespace FirstLevel.EditorTests
 {
     public sealed class FirstLevelSceneTests
     {
-        private const string ScenePath = "Assets/Scenes/FirstLevel.unity";
+        private const string ScenePath = "Assets/Settings/Scenes 1/FirstLevel.unity";
 
         [Test]
         public void FirstLevelSceneAssetExists()

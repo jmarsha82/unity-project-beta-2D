@@ -13,7 +13,7 @@ function Assert-Contains {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$scenePath = Join-Path $repoRoot 'Assets/Scenes/FirstLevel.unity'
+$scenePath = Join-Path $repoRoot 'Assets/Settings/Scenes 1/FirstLevel.unity'
 $manifestPath = Join-Path $repoRoot 'Packages/manifest.json'
 $lockPath = Join-Path $repoRoot 'Packages/packages-lock.json'
 

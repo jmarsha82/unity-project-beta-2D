@@ -12,7 +12,7 @@ Run them locally with:
 unity test C:\Users\jmars\CodeRepos\unity-project-beta-2D --mode EditMode --output TestResults\editmode.xml --timeout 300 -- -nographics
 ```
 
-The current tests validate `Assets/Scenes/FirstLevel.unity`: level length, grass/dirt surfaces, 2D collider, start/end flags, white camera background, and shading accent objects.
+The current tests validate `Assets/Settings/Scenes 1/FirstLevel.unity`: level length, grass/dirt surfaces, 2D collider, start/end flags, white camera background, and shading accent objects.
 
 For GitHub-hosted CI without a Unity license secret, `.github/workflows/ci.yml` runs:
 
@@ -45,4 +45,3 @@ Dependabot is configured for GitHub Actions updates in `.github/dependabot.yml`.
 ## Coverage
 
 Unity code coverage is not enabled yet. This repository currently has scene and asset-contract tests rather than runtime gameplay code with meaningful line coverage. Add Unity Test Framework coverage once gameplay scripts are introduced and coverage can measure product code rather than only test assertions.
-
