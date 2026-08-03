@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -42,6 +43,8 @@ public class PlayerController : MonoBehaviour
     public float wrapMargin = 0.5f;
 
     [Header("Explosion")]
+    public GameObject explosionEffect;
+    public GameObject bounceEffectPrefab;
     public int explosionFragments = 14;
     public float explosionForce = 5.5f;
     public float explosionLifetime = 1.2f;
@@ -59,6 +62,8 @@ public class PlayerController : MonoBehaviour
     public float score = 0f;
     public float scoreMultiplier = 10f;
     public int obstacleDestroyScore = 5;
+    public string highScorePlayerPrefsKey = "HighScore";
+    public int highScore = 0;
     public UIDocument uiDocument;
 
     Rigidbody2D rb;
@@ -66,6 +71,8 @@ public class PlayerController : MonoBehaviour
     SpriteRenderer[] shipRenderers;
     readonly Dictionary<SpriteRenderer, Color> originalColors = new Dictionary<SpriteRenderer, Color>();
     Label scoreText;
+    Label highScoreText;
+    Button restartButton;
     GameObject shieldVisual;
     Vector2 thrustDirection;
     bool isThrusting;
@@ -297,7 +304,25 @@ public class PlayerController : MonoBehaviour
 
     void InitializeScoreUi()
     {
-        scoreText = uiDocument != null ? uiDocument.rootVisualElement.Q<Label>("ScoreLabel") : null;
+        if (!PlayerPrefs.HasKey(highScorePlayerPrefsKey))
+        {
+            PlayerPrefs.SetInt(highScorePlayerPrefsKey, 0);
+            PlayerPrefs.Save();
+        }
+
+        highScore = PlayerPrefs.GetInt(highScorePlayerPrefsKey, 0);
+
+        VisualElement root = uiDocument != null ? uiDocument.rootVisualElement : null;
+        scoreText = root != null ? root.Q<Label>("ScoreLabel") : null;
+        highScoreText = root != null ? root.Q<Label>("HighScoreLabel") : null;
+        restartButton = root != null ? root.Q<Button>("RestartButton") : null;
+        if (restartButton != null)
+        {
+            restartButton.style.display = DisplayStyle.None;
+            restartButton.clicked -= ReloadScene;
+            restartButton.clicked += ReloadScene;
+        }
+
         RefreshScore();
     }
 
@@ -314,6 +339,30 @@ public class PlayerController : MonoBehaviour
         {
             scoreText.text = "Score: " + score;
         }
+
+        RefreshHighScoreLabel();
+    }
+
+    void RefreshHighScoreLabel()
+    {
+        if (highScoreText != null)
+        {
+            highScoreText.text = "High Score: " + highScore;
+        }
+    }
+
+    void SaveHighScoreIfNeeded()
+    {
+        int currentScore = Mathf.FloorToInt(score);
+        if (currentScore <= highScore)
+        {
+            return;
+        }
+
+        highScore = currentScore;
+        PlayerPrefs.SetInt(highScorePlayerPrefsKey, highScore);
+        PlayerPrefs.Save();
+        RefreshHighScoreLabel();
     }
 
     void UpdateBooster()
@@ -401,12 +450,30 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        if (explosionEffect != null)
+        {
+            Instantiate(explosionEffect, transform.position, transform.rotation);
+        }
+
         ExplodeAndDestroy();
+        if (restartButton != null)
+        {
+            restartButton.style.display = DisplayStyle.Flex;
+        }
+
+        if (bounceEffectPrefab != null && collision.contactCount > 0)
+        {
+            Vector2 contactPoint = collision.GetContact(0).point;
+            GameObject bounceEffect = Instantiate(bounceEffectPrefab, contactPoint, Quaternion.identity);
+
+            Destroy(bounceEffect, 1f);
+        }
     }
 
     void ExplodeAndDestroy()
     {
         isDestroyed = true;
+        SaveHighScoreIfNeeded();
         SetBoosterActive(false);
         SpawnExplosionFragments();
 
@@ -550,5 +617,10 @@ public class PlayerController : MonoBehaviour
         {
             boosterFlame.SetActive(active);
         }
+    }
+
+    void ReloadScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

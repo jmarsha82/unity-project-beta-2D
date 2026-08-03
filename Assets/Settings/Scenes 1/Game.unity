@@ -1107,6 +1107,61 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1791678812}
   m_LocalEulerAnglesHint: {x: -6.873, y: -0.051, z: 180.428}
+--- !u!1 &1207770939
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1207770941}
+  - component: {fileID: 1207770940}
+  m_Layer: 5
+  m_Name: GameUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1207770940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207770939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: c7739c357aa4c0b4392539c8c29c38e4, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: ccc4f3623be142544b4fc1da20580000, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &1207770941
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207770939}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1338167179 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6950151218508218418, guid: 82becf4bfad387b47a8799968433ea59, type: 3}
@@ -1751,7 +1806,46 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   thrustForce: 1
   maxSpeed: 5
+  rotationSpeed: 720
+  idleDrag: 0.35
   boosterFlame: {fileID: 1193397684}
+  allowMouseSteering: 1
+  allowKeyboardSteering: 1
+  boostForce: 6
+  boostCooldown: 1.5
+  boostDuration: 0.18
+  shieldDuration: 1.25
+  shieldCooldown: 4
+  shieldColor: {r: 0.15, g: 0.85, b: 1, a: 0.45}
+  canFireLasers: 1
+  laserSpeed: 14
+  laserLifetime: 1.4
+  laserCooldown: 0.18
+  laserDamage: 1
+  laserShrinkAmount: 0.18
+  laserSpawnOffset: 0.9
+  laserColor: {r: 1, g: 0.1, b: 0.05, a: 1}
+  wrapAroundCameraBounds: 1
+  boundaryCamera: {fileID: 0}
+  wrapMargin: 0.5
+  explosionEffect: {fileID: 4689901296983122206, guid: 2f82460a021a9c74b876d8ae85243055, type: 3}
+  bounceEffectPrefab: {fileID: 0}
+  explosionFragments: 14
+  explosionForce: 5.5
+  explosionLifetime: 1.2
+  destroyDelay: 0.05
+  stylizeShipOnStart: 1
+  tintBoosterByThrust: 1
+  hullColor: {r: 0.08, g: 0.25, b: 0.95, a: 1}
+  accentColor: {r: 0.95, g: 0.85, b: 0.2, a: 1}
+  engineColor: {r: 1, g: 0.35, b: 0.05, a: 1}
+  elapsedTime: 0
+  score: 0
+  scoreMultiplier: 10
+  obstacleDestroyScore: 5
+  highScorePlayerPrefsKey: HighScore
+  highScore: 0
+  uiDocument: {fileID: 1207770940}
 --- !u!1 &1925438194
 GameObject:
   m_ObjectHideFlags: 0
@@ -1955,3 +2049,4 @@ SceneRoots:
   - {fileID: 471259719}
   - {fileID: 912698540}
   - {fileID: 1791678812}
+  - {fileID: 1207770941}

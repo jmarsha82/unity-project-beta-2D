@@ -1,6 +1,7 @@
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace FirstLevel.EditorTests
 {
@@ -94,6 +95,92 @@ namespace FirstLevel.EditorTests
             Object.DestroyImmediate(playerObject);
         }
 
+        [Test]
+        public void UpdateScoreAdvancesElapsedTimeScore()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "scoreMultiplier", 10f);
+            player.SendMessage("Start");
+
+            InvokePrivateMethod(player, "UpdateScore", 1.25f);
+
+            Assert.That(GetPublicField<float>(player, "elapsedTime"), Is.EqualTo(1.25f));
+            Assert.That(GetPublicField<float>(player, "score"), Is.EqualTo(12f));
+            Object.DestroyImmediate(playerObject);
+        }
+
+        [Test]
+        public void StartCreatesHighScorePlayerPrefsWhenMissing()
+        {
+            string prefsKey = "PlayerControllerTests.HighScore.Missing";
+            PlayerPrefs.DeleteKey(prefsKey);
+
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "highScorePlayerPrefsKey", prefsKey);
+
+            player.SendMessage("Start");
+
+            Assert.That(PlayerPrefs.HasKey(prefsKey), Is.True);
+            Assert.That(PlayerPrefs.GetInt(prefsKey), Is.EqualTo(0));
+            Assert.That(GetPublicField<int>(player, "highScore"), Is.EqualTo(0));
+            PlayerPrefs.DeleteKey(prefsKey);
+            Object.DestroyImmediate(playerObject);
+        }
+
+        [Test]
+        public void GameEndSavesNewHighScore()
+        {
+            string prefsKey = "PlayerControllerTests.HighScore.New";
+            PlayerPrefs.SetInt(prefsKey, 12);
+
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "highScorePlayerPrefsKey", prefsKey);
+            SetPublicField(player, "scoreMultiplier", 0f);
+            player.SendMessage("Start");
+            InvokePublicMethod(player, "AddScore", 30);
+
+            InvokePrivateMethod(player, "ExplodeAndDestroy");
+
+            Assert.That(PlayerPrefs.GetInt(prefsKey), Is.EqualTo(30));
+            Assert.That(GetPublicField<int>(player, "highScore"), Is.EqualTo(30));
+            PlayerPrefs.DeleteKey(prefsKey);
+            Object.DestroyImmediate(playerObject);
+        }
+
+        [Test]
+        public void GameEndKeepsExistingHighScoreWhenCurrentScoreIsLower()
+        {
+            string prefsKey = "PlayerControllerTests.HighScore.Keep";
+            PlayerPrefs.SetInt(prefsKey, 50);
+
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "highScorePlayerPrefsKey", prefsKey);
+            SetPublicField(player, "scoreMultiplier", 0f);
+            player.SendMessage("Start");
+            InvokePublicMethod(player, "AddScore", 20);
+
+            InvokePrivateMethod(player, "ExplodeAndDestroy");
+
+            Assert.That(PlayerPrefs.GetInt(prefsKey), Is.EqualTo(50));
+            Assert.That(GetPublicField<int>(player, "highScore"), Is.EqualTo(50));
+            PlayerPrefs.DeleteKey(prefsKey);
+            Object.DestroyImmediate(playerObject);
+        }
+
+        [Test]
+        public void RefreshHighScoreLabelDisplaysSavedValue()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            var highScoreLabel = new Label();
+            SetPrivateField(player, "highScoreText", highScoreLabel);
+            SetPublicField(player, "highScore", 42);
+
+            InvokePrivateMethod(player, "RefreshHighScoreLabel");
+
+            Assert.That(highScoreLabel.text, Is.EqualTo("High Score: 42"));
+            Object.DestroyImmediate(playerObject);
+        }
+
         private static GameObject CreatePlayer(out MonoBehaviour player)
         {
             var playerObject = new GameObject("Player");
@@ -147,6 +234,13 @@ namespace FirstLevel.EditorTests
             MethodInfo method = component.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);
             return method.Invoke(component, null);
+        }
+
+        private static object InvokePrivateMethod(MonoBehaviour component, string methodName, params object[] arguments)
+        {
+            MethodInfo method = component.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            return method.Invoke(component, arguments);
         }
 
         private static void InvokePublicMethod(MonoBehaviour component, string methodName, params object[] arguments)
