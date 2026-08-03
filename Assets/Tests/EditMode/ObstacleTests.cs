@@ -54,6 +54,40 @@ namespace FirstLevel.EditorTests
             }
         }
 
+        [Test]
+        public void LaserHitShrinksObstacle()
+        {
+            GameObject obstacleObject = CreateObstacle(out MonoBehaviour obstacle);
+            SetPublicField(obstacle, "laserHitsToDestroy", 4f);
+            SetPublicField(obstacle, "minExplodeSize", 0.2f);
+            SetPrivateField(obstacle, "baseScale", Vector3.one);
+            SetPrivateField(obstacle, "currentLaserHealth", 4f);
+
+            InvokePublicMethod(obstacle, "ApplyLaserHit", 1f, 0.25f);
+
+            Assert.That(obstacleObject.transform.localScale.x, Is.EqualTo(0.75f).Within(0.0001f));
+            Assert.That(obstacleObject.transform.localScale.y, Is.EqualTo(0.75f).Within(0.0001f));
+            Object.DestroyImmediate(obstacleObject);
+        }
+
+        [Test]
+        public void RespawnPositionStaysInsideCameraBounds()
+        {
+            using (CreateCamera(out Camera camera))
+            {
+                GameObject obstacleObject = CreateObstacle(out MonoBehaviour obstacle);
+                SetPublicField(obstacle, "boundaryCamera", camera);
+                SetPublicField(obstacle, "respawnInset", 1f);
+                SetPublicField(obstacle, "playerAvoidRadius", 0f);
+
+                Vector3 spawnPosition = (Vector3)InvokePrivateMethod(obstacle, "GetRandomInteriorSpawnPosition");
+
+                Assert.That(spawnPosition.x, Is.InRange(-4f, 4f));
+                Assert.That(spawnPosition.y, Is.InRange(-4f, 4f));
+                Object.DestroyImmediate(obstacleObject);
+            }
+        }
+
         private static GameObject CreateObstacle(out MonoBehaviour obstacle)
         {
             var obstacleObject = new GameObject("Obstacle");
@@ -93,11 +127,18 @@ namespace FirstLevel.EditorTests
             field.SetValue(obstacle, value);
         }
 
-        private static void InvokePrivateMethod(MonoBehaviour obstacle, string methodName)
+        private static object InvokePrivateMethod(MonoBehaviour obstacle, string methodName)
         {
             MethodInfo method = obstacle.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);
-            method.Invoke(obstacle, null);
+            return method.Invoke(obstacle, null);
+        }
+
+        private static void InvokePublicMethod(MonoBehaviour obstacle, string methodName, params object[] arguments)
+        {
+            MethodInfo method = obstacle.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(obstacle, arguments);
         }
 
         private static System.Type GetObstacleType()

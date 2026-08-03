@@ -25,6 +25,16 @@ public class PlayerController : MonoBehaviour
     public float shieldCooldown = 4f;
     public Color shieldColor = new Color(0.15f, 0.85f, 1f, 0.45f);
 
+    [Header("Lasers")]
+    public bool canFireLasers = true;
+    public float laserSpeed = 14f;
+    public float laserLifetime = 1.4f;
+    public float laserCooldown = 0.18f;
+    public float laserDamage = 1f;
+    public float laserShrinkAmount = 0.18f;
+    public float laserSpawnOffset = 0.9f;
+    public Color laserColor = new Color(1f, 0.1f, 0.05f, 1f);
+
     [Header("Screen Wrap")]
     public bool wrapAroundCameraBounds = true;
     public Camera boundaryCamera;
@@ -55,6 +65,7 @@ public class PlayerController : MonoBehaviour
     float boostEndTime;
     float nextShieldTime;
     float shieldEndTime;
+    float nextLaserTime;
 
     void Start()
     {
@@ -116,6 +127,11 @@ public class PlayerController : MonoBehaviour
                 TryBoost();
             }
 
+            if (Keyboard.current.fKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame)
+            {
+                TryFireLaser();
+            }
+
             if (Keyboard.current.leftShiftKey.wasPressedThisFrame || Keyboard.current.rightShiftKey.wasPressedThisFrame)
             {
                 TryActivateShield();
@@ -135,14 +151,14 @@ public class PlayerController : MonoBehaviour
                 }
             }
 
-            if (Mouse.current.rightButton.wasPressedThisFrame)
-            {
-                TryBoost();
-            }
-
             if (Mouse.current.middleButton.wasPressedThisFrame)
             {
                 TryActivateShield();
+            }
+
+            if (Mouse.current.rightButton.wasPressedThisFrame)
+            {
+                TryFireLaser();
             }
         }
     }
@@ -232,6 +248,19 @@ public class PlayerController : MonoBehaviour
         shieldEndTime = Time.time + shieldDuration;
         nextShieldTime = Time.time + shieldCooldown;
         UpdateShieldVisual();
+    }
+
+    void TryFireLaser()
+    {
+        if (!canFireLasers || Time.time < nextLaserTime)
+        {
+            return;
+        }
+
+        Vector2 fireDirection = thrustDirection.sqrMagnitude > 0.01f ? thrustDirection.normalized : (Vector2)transform.up;
+        Vector3 spawnPosition = transform.position + (Vector3)(fireDirection * laserSpawnOffset);
+        LaserProjectile.Create(spawnPosition, fireDirection, laserSpeed, laserLifetime, laserDamage, laserShrinkAmount, laserColor);
+        nextLaserTime = Time.time + laserCooldown;
     }
 
     void UpdateBooster()

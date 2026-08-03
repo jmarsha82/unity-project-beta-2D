@@ -49,6 +49,24 @@ namespace FirstLevel.EditorTests
             Object.DestroyImmediate(playerObject);
         }
 
+        [Test]
+        public void FiringLaserCreatesProjectileInFrontOfPlayer()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "canFireLasers", true);
+            SetPublicField(player, "laserCooldown", 0f);
+            SetPrivateField(player, "thrustDirection", Vector2.up);
+
+            InvokePrivateMethod(player, "TryFireLaser");
+
+            GameObject laser = GameObject.Find("Player Laser");
+            Assert.That(laser, Is.Not.Null);
+            Assert.That(laser.GetComponent<BoxCollider2D>(), Is.Not.Null);
+            Assert.That(laser.GetComponent<Rigidbody2D>().linearVelocity.y, Is.GreaterThan(0f));
+            Object.DestroyImmediate(laser);
+            Object.DestroyImmediate(playerObject);
+        }
+
         private static GameObject CreatePlayer(out MonoBehaviour player)
         {
             var playerObject = new GameObject("Player");
