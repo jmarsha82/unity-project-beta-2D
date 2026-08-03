@@ -116,6 +116,18 @@ namespace FirstLevel.EditorTests
             Object.DestroyImmediate(playerObject);
         }
 
+        [Test]
+        public void StartAppliesAsteroidThemeSprite()
+        {
+            GameObject obstacleObject = CreateObstacle(out MonoBehaviour obstacle);
+            SetPublicField(obstacle, "useAsteroidSpriteTheme", true);
+
+            obstacle.SendMessage("Start");
+
+            Assert.That(obstacleObject.GetComponent<SpriteRenderer>().sprite, Is.Not.Null);
+            Object.DestroyImmediate(obstacleObject);
+        }
+
         private static GameObject CreateObstacle(out MonoBehaviour obstacle)
         {
             var obstacleObject = new GameObject("Obstacle");

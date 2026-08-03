@@ -57,6 +57,13 @@ public class PlayerController : MonoBehaviour
     public Color accentColor = new Color(0.95f, 0.85f, 0.2f, 1f);
     public Color engineColor = new Color(1f, 0.35f, 0.05f, 1f);
 
+    [Header("Space Theme")]
+    public bool useRocketSpriteTheme = true;
+    public string rocketSpriteResourcePath = "Sprites/RocketShip";
+    public Vector3 rocketSpriteScale = new Vector3(1.35f, 1.35f, 1f);
+    public int rocketSpriteSortingOrder = 4;
+    public bool hideOriginalShipRenderersWithRocket = true;
+
     [Header("Score and Time")]
     public float elapsedTime = 0f;
     public float score = 0f;
@@ -73,6 +80,7 @@ public class PlayerController : MonoBehaviour
     Label scoreText;
     Label highScoreText;
     Button restartButton;
+    SpriteRenderer rocketThemeRenderer;
     GameObject shieldVisual;
     Vector2 thrustDirection;
     bool isThrusting;
@@ -87,6 +95,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         InitializeComponents();
+        SpaceThemeController.EnsureSpaceTheme(cachedCamera);
         InitializeVisuals();
         InitializeScoreUi();
     }
@@ -298,8 +307,59 @@ public class PlayerController : MonoBehaviour
             StylizeShip();
         }
 
+        ApplyRocketTheme();
         CreateShieldVisual();
         SetBoosterActive(false);
+    }
+
+    void ApplyRocketTheme()
+    {
+        if (!useRocketSpriteTheme || string.IsNullOrWhiteSpace(rocketSpriteResourcePath))
+        {
+            return;
+        }
+
+        Sprite rocketSprite = Resources.Load<Sprite>(rocketSpriteResourcePath);
+        if (rocketSprite == null)
+        {
+            return;
+        }
+
+        if (rocketThemeRenderer == null)
+        {
+            Transform existingRocket = transform.Find("Rocket Theme Sprite");
+            rocketThemeRenderer = existingRocket != null
+                ? existingRocket.GetComponent<SpriteRenderer>()
+                : null;
+
+            if (rocketThemeRenderer == null)
+            {
+                GameObject rocketVisual = new GameObject("Rocket Theme Sprite");
+                rocketVisual.transform.SetParent(transform, false);
+                rocketThemeRenderer = rocketVisual.AddComponent<SpriteRenderer>();
+            }
+        }
+
+        rocketThemeRenderer.sprite = rocketSprite;
+        rocketThemeRenderer.color = Color.white;
+        rocketThemeRenderer.sortingOrder = rocketSpriteSortingOrder;
+        rocketThemeRenderer.transform.localPosition = Vector3.zero;
+        rocketThemeRenderer.transform.localRotation = Quaternion.identity;
+        rocketThemeRenderer.transform.localScale = rocketSpriteScale;
+        rocketThemeRenderer.enabled = true;
+
+        if (hideOriginalShipRenderersWithRocket && shipRenderers != null)
+        {
+            foreach (SpriteRenderer renderer in shipRenderers)
+            {
+                if (renderer != null && renderer != rocketThemeRenderer && renderer.gameObject != boosterFlame)
+                {
+                    renderer.enabled = false;
+                }
+            }
+        }
+
+        shipRenderers = GetComponentsInChildren<SpriteRenderer>(true);
     }
 
     void InitializeScoreUi()
@@ -534,6 +594,11 @@ public class PlayerController : MonoBehaviour
 
     SpriteRenderer FindBestFragmentSource()
     {
+        if (rocketThemeRenderer != null && rocketThemeRenderer.sprite != null)
+        {
+            return rocketThemeRenderer;
+        }
+
         if (shipRenderers == null || shipRenderers.Length == 0)
         {
             return null;

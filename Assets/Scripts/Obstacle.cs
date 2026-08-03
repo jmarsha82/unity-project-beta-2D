@@ -27,6 +27,8 @@ public class Obstacle : MonoBehaviour
 
     [Header("Visual Polish")]
     public bool stylizeAsteroidOnStart = true;
+    public bool useAsteroidSpriteTheme = true;
+    public string asteroidSpriteResourcePath = "Sprites/Asteroid";
     public int surfaceDetailCount = 4;
     public Color[] asteroidPalette =
     {
@@ -73,6 +75,7 @@ public class Obstacle : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer != null)
         {
+            ApplyAsteroidThemeSprite();
             baseColor = spriteRenderer.color;
             if (stylizeAsteroidOnStart)
             {
@@ -415,6 +418,20 @@ public class Obstacle : MonoBehaviour
             detailRenderer.sprite = spriteRenderer.sprite;
             detailRenderer.color = surfaceShadowColor;
             detailRenderer.sortingOrder = spriteRenderer.sortingOrder + 1;
+        }
+    }
+
+    void ApplyAsteroidThemeSprite()
+    {
+        if (!useAsteroidSpriteTheme || string.IsNullOrWhiteSpace(asteroidSpriteResourcePath) || spriteRenderer == null)
+        {
+            return;
+        }
+
+        Sprite asteroidSprite = Resources.Load<Sprite>(asteroidSpriteResourcePath);
+        if (asteroidSprite != null)
+        {
+            spriteRenderer.sprite = asteroidSprite;
         }
     }
 

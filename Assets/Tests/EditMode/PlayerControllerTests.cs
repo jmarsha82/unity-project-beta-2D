@@ -181,6 +181,54 @@ namespace FirstLevel.EditorTests
             Object.DestroyImmediate(playerObject);
         }
 
+        [Test]
+        public void SpaceThemeCreatesBackdropFromResourceSprite()
+        {
+            using (CreateCamera(out Camera camera))
+            {
+                GameObject existingBackdrop = GameObject.Find("Space Theme Backdrop");
+                if (existingBackdrop != null)
+                {
+                    Object.DestroyImmediate(existingBackdrop);
+                }
+
+                System.Type themeType = System.Type.GetType("SpaceThemeController, Assembly-CSharp");
+                Assert.That(themeType, Is.Not.Null);
+                MethodInfo ensureTheme = themeType.GetMethod("EnsureSpaceTheme", new[] { typeof(Camera) });
+                Assert.That(ensureTheme, Is.Not.Null);
+
+                GameObject backdrop = (GameObject)ensureTheme.Invoke(null, new object[] { camera });
+
+                Assert.That(backdrop, Is.Not.Null);
+                Assert.That(backdrop.name, Is.EqualTo("Space Theme Backdrop"));
+                Assert.That(backdrop.GetComponent<SpriteRenderer>().sprite, Is.Not.Null);
+                Assert.That(camera.clearFlags, Is.EqualTo(CameraClearFlags.SolidColor));
+                Object.DestroyImmediate(backdrop);
+            }
+        }
+
+        [Test]
+        public void StartAppliesRocketThemeSprite()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "useRocketSpriteTheme", true);
+
+            player.SendMessage("Start");
+
+            Transform rocketVisual = playerObject.transform.Find("Rocket Theme Sprite");
+            Assert.That(rocketVisual, Is.Not.Null);
+            Assert.That(rocketVisual.GetComponent<SpriteRenderer>().sprite, Is.Not.Null);
+            Assert.That(GetPrivateField<SpriteRenderer[]>(player, "shipRenderers"), Has.Length.GreaterThan(1));
+
+            GameObject backdrop = GameObject.Find("Space Theme Backdrop");
+            if (backdrop != null)
+            {
+                Object.DestroyImmediate(backdrop);
+            }
+
+            Object.DestroyImmediate(playerObject);
+        }
+
         private static GameObject CreatePlayer(out MonoBehaviour player)
         {
             var playerObject = new GameObject("Player");
@@ -225,6 +273,13 @@ namespace FirstLevel.EditorTests
         private static T GetPublicField<T>(MonoBehaviour component, string fieldName)
         {
             FieldInfo field = component.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(field, Is.Not.Null);
+            return (T)field.GetValue(component);
+        }
+
+        private static T GetPrivateField<T>(MonoBehaviour component, string fieldName)
+        {
+            FieldInfo field = component.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null);
             return (T)field.GetValue(component);
         }
