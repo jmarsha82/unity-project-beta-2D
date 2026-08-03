@@ -88,6 +88,34 @@ namespace FirstLevel.EditorTests
             }
         }
 
+        [Test]
+        public void DestroyedObstacleAwardsPlayerScore()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "scoreMultiplier", 0f);
+            SetPublicField(player, "obstacleDestroyScore", 5);
+            player.SendMessage("Start");
+
+            GameObject obstacleObject = CreateObstacle(out MonoBehaviour obstacle);
+            SetPublicField(obstacle, "laserHitsToDestroy", 1f);
+            SetPublicField(obstacle, "minExplodeSize", 0.2f);
+            SetPublicField(obstacle, "spawnReplacementOnDestroy", false);
+            SetPublicField(obstacle, "explosionFragments", 1);
+            SetPrivateField(obstacle, "baseScale", Vector3.one);
+            SetPrivateField(obstacle, "currentLaserHealth", 1f);
+
+            InvokePublicMethod(obstacle, "ApplyLaserHit", 1f, 0.25f);
+
+            Assert.That(GetPublicField<float>(player, "score"), Is.EqualTo(5f));
+            Object.DestroyImmediate(obstacleObject);
+            GameObject fragment = GameObject.Find("Asteroid Explosion Fragment");
+            if (fragment != null)
+            {
+                Object.DestroyImmediate(fragment);
+            }
+            Object.DestroyImmediate(playerObject);
+        }
+
         private static GameObject CreateObstacle(out MonoBehaviour obstacle)
         {
             var obstacleObject = new GameObject("Obstacle");
@@ -127,6 +155,13 @@ namespace FirstLevel.EditorTests
             field.SetValue(obstacle, value);
         }
 
+        private static T GetPublicField<T>(MonoBehaviour obstacle, string fieldName)
+        {
+            FieldInfo field = obstacle.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(field, Is.Not.Null);
+            return (T)field.GetValue(obstacle);
+        }
+
         private static object InvokePrivateMethod(MonoBehaviour obstacle, string methodName)
         {
             MethodInfo method = obstacle.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -146,6 +181,29 @@ namespace FirstLevel.EditorTests
             System.Type obstacleType = System.Type.GetType("Obstacle, Assembly-CSharp");
             Assert.That(obstacleType, Is.Not.Null);
             return obstacleType;
+        }
+
+        private static GameObject CreatePlayer(out MonoBehaviour player)
+        {
+            var playerObject = new GameObject("Player");
+            playerObject.AddComponent<Rigidbody2D>();
+
+            var hull = new GameObject("Life_Support");
+            hull.transform.SetParent(playerObject.transform, false);
+            hull.AddComponent<SpriteRenderer>();
+
+            player = (MonoBehaviour)playerObject.AddComponent(GetPlayerControllerType());
+            SetPublicField(player, "stylizeShipOnStart", false);
+            SetPublicField(player, "explosionFragments", 1);
+            SetPublicField(player, "destroyDelay", 10f);
+            return playerObject;
+        }
+
+        private static System.Type GetPlayerControllerType()
+        {
+            System.Type playerControllerType = System.Type.GetType("PlayerController, Assembly-CSharp");
+            Assert.That(playerControllerType, Is.Not.Null);
+            return playerControllerType;
         }
 
         private readonly struct DisposableCamera : System.IDisposable

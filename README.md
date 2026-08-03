@@ -44,4 +44,10 @@ Dependabot is configured for GitHub Actions updates in `.github/dependabot.yml`.
 
 ## Coverage
 
-Unity code coverage is not enabled yet. This repository currently has scene and asset-contract tests rather than runtime gameplay code with meaningful line coverage. Add Unity Test Framework coverage once gameplay scripts are introduced and coverage can measure product code rather than only test assertions.
+Unity code coverage is enabled through `com.unity.testtools.codecoverage`.
+
+Run focused gameplay coverage with:
+
+```powershell
+unity test C:\Users\jmars\CodeRepos\unity-project-beta-2D --mode EditMode --filter "PlayerControllerTests|ObstacleTests" --output TestResults\score-coverage-editmode.xml -- -enableCodeCoverage -coverageResultsPath TestResults\Coverage -coverageOptions "generateHtmlReport;generateBadgeReport;assemblyFilters:+Assembly-CSharp"
+```

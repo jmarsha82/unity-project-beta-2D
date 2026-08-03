@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
@@ -53,14 +54,23 @@ public class PlayerController : MonoBehaviour
     public Color accentColor = new Color(0.95f, 0.85f, 0.2f, 1f);
     public Color engineColor = new Color(1f, 0.35f, 0.05f, 1f);
 
+    [Header("Score and Time")]
+    public float elapsedTime = 0f;
+    public float score = 0f;
+    public float scoreMultiplier = 10f;
+    public int obstacleDestroyScore = 5;
+    public UIDocument uiDocument;
+
     Rigidbody2D rb;
     Camera cachedCamera;
     SpriteRenderer[] shipRenderers;
     readonly Dictionary<SpriteRenderer, Color> originalColors = new Dictionary<SpriteRenderer, Color>();
+    Label scoreText;
     GameObject shieldVisual;
     Vector2 thrustDirection;
     bool isThrusting;
     bool isDestroyed;
+    int bonusScore;
     float nextBoostTime;
     float boostEndTime;
     float nextShieldTime;
@@ -69,18 +79,9 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-        cachedCamera = boundaryCamera != null ? boundaryCamera : Camera.main;
-        shipRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-        CacheRendererColors();
-
-        if (stylizeShipOnStart)
-        {
-            StylizeShip();
-        }
-
-        CreateShieldVisual();
-        SetBoosterActive(false);
+        InitializeComponents();
+        InitializeVisuals();
+        InitializeScoreUi();
     }
 
     void Update()
@@ -94,6 +95,7 @@ public class PlayerController : MonoBehaviour
         UpdateRotation();
         UpdateBooster();
         UpdateShieldVisual();
+        UpdateScore(Time.deltaTime);
     }
 
     void FixedUpdate()
@@ -261,6 +263,57 @@ public class PlayerController : MonoBehaviour
         Vector3 spawnPosition = transform.position + (Vector3)(fireDirection * laserSpawnOffset);
         LaserProjectile.Create(spawnPosition, fireDirection, laserSpeed, laserLifetime, laserDamage, laserShrinkAmount, laserColor);
         nextLaserTime = Time.time + laserCooldown;
+    }
+
+    public void AwardObstacleDestroyed()
+    {
+        AddScore(obstacleDestroyScore);
+    }
+
+    public void AddScore(int points)
+    {
+        bonusScore += Mathf.Max(0, points);
+        RefreshScore();
+    }
+
+    void InitializeComponents()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        cachedCamera = boundaryCamera != null ? boundaryCamera : Camera.main;
+        shipRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        CacheRendererColors();
+    }
+
+    void InitializeVisuals()
+    {
+        if (stylizeShipOnStart)
+        {
+            StylizeShip();
+        }
+
+        CreateShieldVisual();
+        SetBoosterActive(false);
+    }
+
+    void InitializeScoreUi()
+    {
+        scoreText = uiDocument != null ? uiDocument.rootVisualElement.Q<Label>("ScoreLabel") : null;
+        RefreshScore();
+    }
+
+    void UpdateScore(float deltaTime)
+    {
+        elapsedTime += Mathf.Max(0f, deltaTime);
+        RefreshScore();
+    }
+
+    void RefreshScore()
+    {
+        score = Mathf.FloorToInt(elapsedTime * scoreMultiplier) + bonusScore;
+        if (scoreText != null)
+        {
+            scoreText.text = "Score: " + score;
+        }
     }
 
     void UpdateBooster()

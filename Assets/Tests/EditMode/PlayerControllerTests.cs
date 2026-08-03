@@ -67,6 +67,33 @@ namespace FirstLevel.EditorTests
             Object.DestroyImmediate(playerObject);
         }
 
+        [Test]
+        public void AddScoreIncreasesScoreWithoutUiDocument()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "scoreMultiplier", 0f);
+            player.SendMessage("Start");
+
+            InvokePublicMethod(player, "AddScore", 5);
+
+            Assert.That(GetPublicField<float>(player, "score"), Is.EqualTo(5f));
+            Object.DestroyImmediate(playerObject);
+        }
+
+        [Test]
+        public void ScoreCombinesElapsedTimeAndBonusPoints()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            SetPublicField(player, "scoreMultiplier", 10f);
+            SetPublicField(player, "elapsedTime", 2.4f);
+            player.SendMessage("Start");
+
+            InvokePublicMethod(player, "AddScore", 5);
+
+            Assert.That(GetPublicField<float>(player, "score"), Is.EqualTo(29f));
+            Object.DestroyImmediate(playerObject);
+        }
+
         private static GameObject CreatePlayer(out MonoBehaviour player)
         {
             var playerObject = new GameObject("Player");
@@ -108,11 +135,25 @@ namespace FirstLevel.EditorTests
             field.SetValue(component, value);
         }
 
+        private static T GetPublicField<T>(MonoBehaviour component, string fieldName)
+        {
+            FieldInfo field = component.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(field, Is.Not.Null);
+            return (T)field.GetValue(component);
+        }
+
         private static object InvokePrivateMethod(MonoBehaviour component, string methodName)
         {
             MethodInfo method = component.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);
             return method.Invoke(component, null);
+        }
+
+        private static void InvokePublicMethod(MonoBehaviour component, string methodName, params object[] arguments)
+        {
+            MethodInfo method = component.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(component, arguments);
         }
 
         private static System.Type GetPlayerControllerType()

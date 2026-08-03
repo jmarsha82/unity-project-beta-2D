@@ -210,10 +210,20 @@ public class Obstacle : MonoBehaviour
             return;
         }
 
+        AwardPlayerScore();
         SpawnReplacementObstacle();
         isExploding = true;
         SpawnExplosionFragments();
         Destroy(gameObject);
+    }
+
+    void AwardPlayerScore()
+    {
+        PlayerController player = FindFirstObjectByType<PlayerController>();
+        if (player != null)
+        {
+            player.AwardObstacleDestroyed();
+        }
     }
 
     void SpawnReplacementObstacle()
