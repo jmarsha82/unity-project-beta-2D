@@ -229,6 +229,55 @@ namespace FirstLevel.EditorTests
             Object.DestroyImmediate(playerObject);
         }
 
+        [Test]
+        public void StartCreatesAndEnablesMobilePointerActions()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+
+            player.SendMessage("Start");
+
+            object moveForward = GetPublicField<object>(player, "moveForward");
+            object lookPosition = GetPublicField<object>(player, "lookPosition");
+            object boostAction = GetPublicField<object>(player, "boostAction");
+            object fireLaserAction = GetPublicField<object>(player, "fireLaserAction");
+            object activateShieldAction = GetPublicField<object>(player, "activateShieldAction");
+
+            Assert.That(moveForward, Is.Not.Null);
+            Assert.That(lookPosition, Is.Not.Null);
+            Assert.That(boostAction, Is.Not.Null);
+            Assert.That(fireLaserAction, Is.Not.Null);
+            Assert.That(activateShieldAction, Is.Not.Null);
+            Assert.That(GetInputActionEnabled(moveForward), Is.True);
+            Assert.That(GetInputActionEnabled(lookPosition), Is.True);
+            Assert.That(GetInputActionEnabled(boostAction), Is.True);
+            Assert.That(GetInputActionEnabled(fireLaserAction), Is.True);
+            Assert.That(GetInputActionEnabled(activateShieldAction), Is.True);
+
+            GameObject backdrop = GameObject.Find("Space Theme Backdrop");
+            if (backdrop != null)
+            {
+                Object.DestroyImmediate(backdrop);
+            }
+
+            Object.DestroyImmediate(playerObject);
+        }
+
+        [Test]
+        public void CreateMobileControlButtonsAddsBoostLaserAndShieldButtons()
+        {
+            GameObject playerObject = CreatePlayer(out MonoBehaviour player);
+            VisualElement root = new VisualElement();
+
+            InvokePrivateMethod(player, "CreateMobileControlButtons", root);
+
+            Assert.That(root.Q<VisualElement>("MobileControlButtons"), Is.Not.Null);
+            Assert.That(root.Q<Button>("MobileBoostButton"), Is.Not.Null);
+            Assert.That(root.Q<Button>("MobileLaserButton"), Is.Not.Null);
+            Assert.That(root.Q<Button>("MobileShieldButton"), Is.Not.Null);
+
+            Object.DestroyImmediate(playerObject);
+        }
+
         private static GameObject CreatePlayer(out MonoBehaviour player)
         {
             var playerObject = new GameObject("Player");
@@ -303,6 +352,13 @@ namespace FirstLevel.EditorTests
             MethodInfo method = component.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
             Assert.That(method, Is.Not.Null);
             method.Invoke(component, arguments);
+        }
+
+        private static bool GetInputActionEnabled(object inputAction)
+        {
+            PropertyInfo enabledProperty = inputAction.GetType().GetProperty("enabled", BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(enabledProperty, Is.Not.Null);
+            return (bool)enabledProperty.GetValue(inputAction);
         }
 
         private static System.Type GetPlayerControllerType()

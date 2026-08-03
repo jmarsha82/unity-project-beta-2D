@@ -16,6 +16,12 @@ public class PlayerController : MonoBehaviour
     [Header("Controls")]
     public bool allowMouseSteering = true;
     public bool allowKeyboardSteering = true;
+    public InputAction moveForward;
+    public InputAction lookPosition;
+    public InputAction boostAction;
+    public InputAction fireLaserAction;
+    public InputAction activateShieldAction;
+    public bool showMobileControlButtons = true;
 
     [Header("Boost")]
     public float boostForce = 6f;
@@ -72,6 +78,7 @@ public class PlayerController : MonoBehaviour
     public string highScorePlayerPrefsKey = "HighScore";
     public int highScore = 0;
     public UIDocument uiDocument;
+    public GameObject borderParent;
 
     Rigidbody2D rb;
     Camera cachedCamera;
@@ -80,6 +87,7 @@ public class PlayerController : MonoBehaviour
     Label scoreText;
     Label highScoreText;
     Button restartButton;
+    VisualElement mobileControls;
     SpriteRenderer rocketThemeRenderer;
     GameObject shieldVisual;
     Vector2 thrustDirection;
@@ -94,10 +102,17 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        InitializeMobileInputActions();
+        EnableMobileInputActions();
         InitializeComponents();
         SpaceThemeController.EnsureSpaceTheme(cachedCamera);
         InitializeVisuals();
         InitializeScoreUi();
+    }
+
+    void OnDisable()
+    {
+        DisableMobileInputActions();
     }
 
     void Update()
@@ -156,25 +171,27 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (allowMouseSteering && Mouse.current != null)
+        ReadMobileActionButtons();
+
+        if (allowMouseSteering)
         {
-            if (Mouse.current.leftButton.isPressed)
+            if (moveForward != null && moveForward.IsPressed())
             {
                 Camera cameraToUse = cachedCamera != null ? cachedCamera : Camera.main;
                 if (cameraToUse != null)
                 {
-                    Vector3 mousePosition = cameraToUse.ScreenToWorldPoint(Mouse.current.position.value);
+                    Vector3 mousePosition = cameraToUse.ScreenToWorldPoint(lookPosition.ReadValue<Vector2>());
                     thrustDirection = ((Vector2)(mousePosition - transform.position)).normalized;
                     isThrusting = true;
                 }
             }
 
-            if (Mouse.current.middleButton.wasPressedThisFrame)
+            if (Mouse.current != null && Mouse.current.middleButton.wasPressedThisFrame)
             {
                 TryActivateShield();
             }
 
-            if (Mouse.current.rightButton.wasPressedThisFrame)
+            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
             {
                 TryFireLaser();
             }
@@ -300,6 +317,70 @@ public class PlayerController : MonoBehaviour
         CacheRendererColors();
     }
 
+    void InitializeMobileInputActions()
+    {
+        if (moveForward == null)
+        {
+            moveForward = new InputAction("Move Forward", InputActionType.Button, "<Pointer>/press");
+        }
+
+        if (lookPosition == null)
+        {
+            lookPosition = new InputAction("Look Position", InputActionType.Value, "<Pointer>/position");
+        }
+
+        if (boostAction == null)
+        {
+            boostAction = new InputAction("Boost", InputActionType.Button);
+        }
+
+        if (fireLaserAction == null)
+        {
+            fireLaserAction = new InputAction("Fire Laser", InputActionType.Button);
+        }
+
+        if (activateShieldAction == null)
+        {
+            activateShieldAction = new InputAction("Activate Shield", InputActionType.Button);
+        }
+    }
+
+    void EnableMobileInputActions()
+    {
+        moveForward.Enable();
+        lookPosition.Enable();
+        boostAction.Enable();
+        fireLaserAction.Enable();
+        activateShieldAction.Enable();
+    }
+
+    void DisableMobileInputActions()
+    {
+        moveForward?.Disable();
+        lookPosition?.Disable();
+        boostAction?.Disable();
+        fireLaserAction?.Disable();
+        activateShieldAction?.Disable();
+    }
+
+    void ReadMobileActionButtons()
+    {
+        if (boostAction != null && boostAction.WasPressedThisFrame())
+        {
+            TryBoost();
+        }
+
+        if (fireLaserAction != null && fireLaserAction.WasPressedThisFrame())
+        {
+            TryFireLaser();
+        }
+
+        if (activateShieldAction != null && activateShieldAction.WasPressedThisFrame())
+        {
+            TryActivateShield();
+        }
+    }
+
     void InitializeVisuals()
     {
         if (stylizeShipOnStart)
@@ -383,7 +464,61 @@ public class PlayerController : MonoBehaviour
             restartButton.clicked += ReloadScene;
         }
 
+        CreateMobileControlButtons(root);
+
         RefreshScore();
+    }
+
+    void CreateMobileControlButtons(VisualElement root)
+    {
+        if (!showMobileControlButtons || root == null || mobileControls != null)
+        {
+            return;
+        }
+
+        mobileControls = new VisualElement
+        {
+            name = "MobileControlButtons"
+        };
+        mobileControls.style.position = Position.Absolute;
+        mobileControls.style.right = 16;
+        mobileControls.style.bottom = 16;
+        mobileControls.style.flexDirection = FlexDirection.Row;
+
+        Button boostButton = CreateMobileButton("Boost", TryBoost);
+        Button laserButton = CreateMobileButton("Laser", TryFireLaser);
+        Button shieldButton = CreateMobileButton("Shield", TryActivateShield);
+        laserButton.style.marginLeft = 10;
+        shieldButton.style.marginLeft = 10;
+
+        mobileControls.Add(boostButton);
+        mobileControls.Add(laserButton);
+        mobileControls.Add(shieldButton);
+        root.Add(mobileControls);
+    }
+
+    Button CreateMobileButton(string text, System.Action action)
+    {
+        Button button = new Button(action)
+        {
+            text = text
+        };
+        button.name = "Mobile" + text + "Button";
+        button.style.width = 82;
+        button.style.height = 56;
+        button.style.unityFontStyleAndWeight = FontStyle.Bold;
+        button.style.fontSize = 14;
+        button.style.color = Color.white;
+        button.style.backgroundColor = new Color(0.08f, 0.12f, 0.22f, 0.82f);
+        button.style.borderTopColor = accentColor;
+        button.style.borderRightColor = accentColor;
+        button.style.borderBottomColor = accentColor;
+        button.style.borderLeftColor = accentColor;
+        button.style.borderTopWidth = 2;
+        button.style.borderRightWidth = 2;
+        button.style.borderBottomWidth = 2;
+        button.style.borderLeftWidth = 2;
+        return button;
     }
 
     void UpdateScore(float deltaTime)
@@ -516,6 +651,10 @@ public class PlayerController : MonoBehaviour
         }
 
         ExplodeAndDestroy();
+        if (borderParent != null)
+        {
+            borderParent.SetActive(false);
+        }
         if (restartButton != null)
         {
             restartButton.style.display = DisplayStyle.Flex;
